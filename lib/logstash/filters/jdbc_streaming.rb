@@ -12,7 +12,7 @@ require "lru_redux"
 #
 # [source,ruby]
 # filter {
-#   jdbc {
+#   jdbc_streaming {
 #     jdbc_driver_library => "/path/to/mysql-connector-java-5.1.34-bin.jar"
 #     jdbc_driver_class => "com.mysql.jdbc.Driver"
 #     jdbc_connection_string => ""jdbc:mysql://localhost:3306/mydatabase"
