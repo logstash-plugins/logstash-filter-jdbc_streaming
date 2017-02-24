@@ -6,6 +6,7 @@ jdk:
 - oraclejdk8
 rvm:
 - jruby-1.7.25
+- jruby-9.1.6.0
 before_script:
 - bundle exec rake vendor
 script:
