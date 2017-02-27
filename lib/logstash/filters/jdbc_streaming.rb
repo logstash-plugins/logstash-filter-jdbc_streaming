@@ -98,7 +98,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   # The minimum number of seconds any entry should remain in the cache, defaults to 5 seconds
   # A numeric value, you can use decimals for example `{ "cache_expiration" => 0.25 }`
   # If there are transient jdbc errors the cache will store empty results for a given
-  # parameter set and bypass the jbdc lookup, this merges the defalt_hash into the event, until
+  # parameter set and bypass the jbdc lookup, this merges the default_hash into the event, until
   # the cache entry expires, then the jdbc lookup will be tried again for the same parameters
   # Conversely, while the cache contains valid results any external problem that would cause
   # jdbc errors, will not be noticed for the cache_expiration period.
