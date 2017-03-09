@@ -44,7 +44,6 @@ module LogStash module Filters
       end
 
       before :each do
-        ::Jdbc::Derby.load_driver
         db.create_table :reference_table do
           String :ip
           String  :name

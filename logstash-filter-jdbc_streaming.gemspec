@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name            = 'logstash-filter-jdbc'
+  s.name            = 'logstash-filter-jdbc_streaming'
   s.version         = '1.0.0'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "This filter executes a SQL query and store the result set in the event."
