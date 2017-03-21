@@ -63,7 +63,7 @@ module LogStash module Filters
       it "fills in the target" do
         plugin.filter(event)
         expect(event.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
-        expect(event.get("tags") & ["lookup_failed", "default_used_instead"]).to be_empty
+        expect((event.get("tags") || []) & ["lookup_failed", "default_used_instead"]).to be_empty
       end
     end
 
