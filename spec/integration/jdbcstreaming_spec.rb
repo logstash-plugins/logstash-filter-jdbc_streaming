@@ -82,8 +82,8 @@ module LogStash module Filters
         let(:idx)    { "42" }
         it "calls the database once then uses the cache" do
           expect(event.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
-          expect(event.get("tags")).not_to include("lookup_failed")
-          expect(event.get("tags")).not_to include("default_used_instead")
+          expect(event.get("tags") || []).not_to include("lookup_failed")
+          expect(event.get("tags") || []).not_to include("default_used_instead")
           events.each do |evt|
             plugin.filter(evt)
             expect(evt.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
@@ -110,8 +110,8 @@ module LogStash module Filters
           let(:cache_expiration) { 0.0000001 }
           it "calls the database each time because cache entry expired" do
             expect(event.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
-            expect(event.get("tags")).not_to include("lookup_failed")
-            expect(event.get("tags")).not_to include("default_used_instead")
+            expect(event.get("tags") || []).not_to include("lookup_failed")
+            expect(event.get("tags") || []).not_to include("default_used_instead")
             events.each do |evt|
               plugin.filter(evt)
               expect(evt.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
@@ -127,8 +127,8 @@ module LogStash module Filters
           let(:idx)    { "1" }
           it "calls the database each time" do
             expect(event.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
-            expect(event.get("tags")).not_to include("lookup_failed")
-            expect(event.get("tags")).not_to include("default_used_instead")
+            expect(event.get("tags") || []).not_to include("lookup_failed")
+            expect(event.get("tags") || []).not_to include("default_used_instead")
             events.each do |evt|
               plugin.filter(evt)
               expect(evt.get("server")).to eq([{"name" => "ldn-server-#{idx}", "location" => "LDN-#{idx}-2-3"}])
