@@ -19,7 +19,6 @@ module LogStash module Filters
         { "jdbc_user" => ENV['USER'], "jdbc_driver_class" => "org.apache.derby.jdbc.EmbeddedDriver",
           "jdbc_connection_string" => "jdbc:derby:memory:testdb;create=true"}
       end
-      let(:settings) { {} }
       let(:plugin) { JdbcStreaming.new(mixin_settings.merge(settings)) }
       let (:db) do
         ::Sequel.connect(mixin_settings['jdbc_connection_string'], :user=> nil, :password=> nil)
@@ -65,7 +64,8 @@ module LogStash module Filters
         it "fills in the target" do
           plugin.filter(event)
           expect(event.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
-          expect(event.get("tags") & ["lookup_failed", "default_used_instead"]).to be_empty
+          expect(event.get("tags")).not_to include("lookup_failed")
+          expect(event.get("tags")).not_to include("default_used_instead")
         end
       end
 
@@ -104,7 +104,8 @@ module LogStash module Filters
           let(:ipaddr)    { "10.1.1.1" }
           it "calls the database once then uses the cache" do
             expect(event.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
-            expect(event.get("tags") & ["lookup_failed", "default_used_instead"]).to eq([])
+            expect(event.get("tags")).not_to include("lookup_failed")
+            expect(event.get("tags")).not_to include("default_used_instead")
             events.each do |evt|
               plugin.filter(evt)
               expect(evt.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
@@ -131,7 +132,8 @@ module LogStash module Filters
             let(:cache_expiration) { 0.0000001 }
             it "calls the database each time because cache entry expired" do
               expect(event.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
-              expect(event.get("tags") & ["lookup_failed", "default_used_instead"]).to eq([])
+              expect(event.get("tags")).not_to include("lookup_failed")
+              expect(event.get("tags")).not_to include("default_used_instead")
               events.each do |evt|
                 plugin.filter(evt)
                 expect(evt.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
@@ -147,7 +149,8 @@ module LogStash module Filters
             let(:ipaddr)    { "10.1.1.1" }
             it "calls the database each time" do
               expect(event.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
-              expect(event.get("tags") & ["lookup_failed", "default_used_instead"]).to eq([])
+              expect(event.get("tags")).not_to include("lookup_failed")
+              expect(event.get("tags")).not_to include("default_used_instead")
               events.each do |evt|
                 plugin.filter(evt)
                 expect(evt.get("server")).to eq([{"name" => "ldn-server-1", "location" => "LDN-2-3-4"}])
