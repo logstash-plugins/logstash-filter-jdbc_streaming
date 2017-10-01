@@ -176,6 +176,12 @@ How often to validate a connection (in seconds)
 
 Hash of query parameter, for example `{ "id" => "id_field" }`
 
+This configuration statement maps fields from each record being processed by logstash, and makes it available for use in your SQL statement.
+
+When referencing fields from the Netflow plugin, use this syntax (taking the "src_addr" field as an example):
+
+`{ "id" => "[netflow][src_addr]" }`
+
 [id="plugins-{type}s-{plugin}-statement"]
 ===== `statement` 
 
@@ -184,7 +190,8 @@ Hash of query parameter, for example `{ "id" => "id_field" }`
   * There is no default value for this setting.
 
 Statement to execute.
-To use parameters, use named parameter syntax, for example "SELECT * FROM MYTABLE WHERE ID = :id"
+
+To use parameters, use named parameter syntax, for example "SELECT * FROM MYTABLE WHERE ID = :id".  Note that there is no need to include quotations in your SQL statement, as the jdbc_streaming plugin will automatically do this.
 
 [id="plugins-{type}s-{plugin}-tag_on_default_use"]
 ===== `tag_on_default_use` 
