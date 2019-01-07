@@ -78,13 +78,12 @@ filter plugins.
   * Value type is <<number,number>>
   * Default value is `5.0`
 
-The minimum number of seconds any entry should remain in the cache, defaults to 5 seconds
-A numeric value, you can use decimals for example `{ "cache_expiration" => 0.25 }`
-If there are transient jdbc errors the cache will store empty results for a given
-parameter set and bypass the jbdc lookup, this merges the default_hash into the event, until
-the cache entry expires, then the jdbc lookup will be tried again for the same parameters
-Conversely, while the cache contains valid results any external problem that would cause
-jdbc errors, will not be noticed for the cache_expiration period.
+The minimum number of seconds any entry should remain in the cache. You can use decimals
+(e.g. `{ "cache_expiration" => 0.25 }`). If there are transient JDBC errors the cache will store empty results for a given
+parameter set and bypass the JDBC lookup. This merges the `default_hash` into the event until
+the cache entry expires, then the JDB lookup will be tried again for the same parameters.
+Conversely, while the cache contains valid results, any external problem that would cause
+JDBC errors will not be noticed for the `cache_expiration` period.
 
 [id="plugins-{type}s-{plugin}-cache_size"]
 ===== `cache_size` 
@@ -92,8 +91,8 @@ jdbc errors, will not be noticed for the cache_expiration period.
   * Value type is <<number,number>>
   * Default value is `500`
 
-The maximum number of cache entries are stored, defaults to 500 entries
-The least recently used entry will be evicted
+The maximum number of cache entries stored.
+The least recently used entry will be evicted.
 
 [id="plugins-{type}s-{plugin}-default_hash"]
 ===== `default_hash` 
@@ -102,7 +101,7 @@ The least recently used entry will be evicted
   * Default value is `{}`
 
 Define a default object to use when lookup fails to return a matching row.
-ensure that the key names of this object match the columns from the statement
+Ensure that the key names of this object match the columns from the statement.
 
 [id="plugins-{type}s-{plugin}-jdbc_connection_string"]
 ===== `jdbc_connection_string` 
