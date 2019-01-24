@@ -39,13 +39,17 @@ module LogStash module PluginMixins module JdbcStreaming
 
     # Maximum number of times to retry connecting to database.
     # Setting it to 0 disables connection retry.
-    #
-    # Note that while there is no connection to database when Logstash start
     config :connection_retry_attempts, :validate => :number, :default => 0
 
-    # Number of seconds to sleep between connection retry attempts
+    # Number of seconds to sleep between connection retry attempts.
     config :connection_retry_attempts_wait_time, :validate => :number, :default => 0.5
 
+    # Minimum number of seconds to wait before the next connection retry circle starts.
+    #
+    # While `connection_retry_attempts_wait_time` waits per event and thus blocks the pipeline,
+    # `connection_retry_delay` skips connection retries for all events that are processed
+    # in the given time frame.
+    config :connection_retry_delay, :validate => :number, :default => 300
   end
 
   public

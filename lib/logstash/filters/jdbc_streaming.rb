@@ -114,6 +114,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   def register
     convert_config_options
     prepare_connected_jdbc_cache
+    @last_retry_timestamp = 0
   end
 
   def filter(event)
@@ -137,11 +138,11 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   def cache_lookup(event)
     params = prepare_parameters_from_event(event)
     @cache.get(params) do
-      execute_query(params)
+      execute_query(params, event.timestamp.to_f)
     end
   end
 
-  def execute_query(params)
+  def execute_query(params, event_timestamp)
     result = CachePayload.new
     begin
       query = @database[@statement, params] # returns a dataset
@@ -151,18 +152,21 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       end
     rescue ::Sequel::Error => e
       if @connection_retry_attempts > 0
-        # Unfortunately a query timeout causes a DatabaseError like many other circumstances,
-        # so we have to manually validate the connection(s).
-        @database.synchronize do |conn|
-          begin
-            unless @database.valid_connection?(conn)
-              @logger.warn? && @logger.warn("No connection to database. Reconnecting #{@connection_retry_attempts} times...", :exception => e)
-              retry_jdbc_connect
-              @logger.debug? && @logger.debug("Connection reestablished")
-              return execute_query(params)
+        if event_timestamp - @last_retry_timestamp >= @connection_retry_delay
+          @last_retry_timestamp = event_timestamp
+          # Unfortunately a query timeout causes a DatabaseError like many other circumstances,
+          # so we have to manually validate the connection(s).
+          @database.synchronize do |conn|
+            begin
+              unless @database.valid_connection?(conn)
+                @logger.warn? && @logger.warn("No connection to database. Reconnecting #{@connection_retry_attempts} times...", :exception => e)
+                retry_jdbc_connect
+                @logger.debug? && @logger.debug("Connection reestablished")
+                return execute_query(params, event_timestamp)
+              end
+            rescue ::Sequel::Error => recon_e
+              @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
             end
-          rescue ::Sequel::Error => recon_e
-            @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
           end
         end
       end
