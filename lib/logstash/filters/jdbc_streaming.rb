@@ -92,6 +92,9 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   # Append values to the `tags` field if no record was found and default values were used
   config :tag_on_default_use, :validate => :array, :default => ["_jdbcstreamingdefaultsused"]
 
+  # Append values to the `tags` field if any records were found
+  config :tag_on_success, :validate => :array, :default => []
+
   # Enable or disable caching, boolean true or false, defaults to true
   config :use_cache, :validate => :boolean, :default => true
 
@@ -128,6 +131,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       tag_default(event)
       process_event(event, @default_array)
     else
+      tag_success(event)
       process_event(event, result.payload)
     end
   end
@@ -195,6 +199,12 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
 
   def tag_default(event)
     @tag_on_default_use.each do |tag|
+      event.tag(tag)
+    end
+  end
+
+  def tag_success(event)
+    @tag_on_success.each do |tag|
       event.tag(tag)
     end
   end
