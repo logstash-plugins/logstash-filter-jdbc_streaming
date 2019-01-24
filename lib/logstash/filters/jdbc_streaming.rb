@@ -137,22 +137,42 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   def cache_lookup(event)
     params = prepare_parameters_from_event(event)
     @cache.get(params) do
-      result = CachePayload.new
-      begin
-        query = @database[@statement, params] # returns a dataset
-        @logger.debug? && @logger.debug("Executing JDBC query", :statement => @statement, :parameters => params)
-        query.all do |row|
-          result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
-        end
-      rescue ::Sequel::Error => e
-        # all sequel errors are a subclass of this, let all other standard or runtime errors bubble up
-        result.failed!
-        @logger.warn? && @logger.warn("Exception when executing JDBC query", :exception => e)
-      end
-      # if either of: no records or a Sequel exception occurs the payload is
-      # empty and the default can be substituted later.
-      result
+      execute_query(params)
     end
+  end
+
+  def execute_query(params)
+    result = CachePayload.new
+    begin
+      query = @database[@statement, params] # returns a dataset
+      @logger.debug? && @logger.debug("Executing JDBC query", :statement => @statement, :parameters => params)
+      query.all do |row|
+        result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
+      end
+    rescue ::Sequel::Error => e
+      if @connection_retry_attempts > 0
+        # Unfortunately a query timeout causes a DatabaseError like many other circumstances,
+        # so we have to manually validate the connection(s).
+        @database.synchronize do |conn|
+          begin
+            unless @database.valid_connection?(conn)
+              @logger.warn? && @logger.warn("No connection to database. Reconnecting #{@connection_retry_attempts} times...", :exception => e)
+              retry_jdbc_connect
+              @logger.debug? && @logger.debug("Connection reestablished")
+              return execute_query(params)
+            end
+          rescue ::Sequel::Error => recon_e
+            @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
+          end
+        end
+      end
+      # all sequel errors are a subclass of this, let all other standard or runtime errors bubble up
+      result.failed!
+      @logger.warn? && @logger.warn("Exception when executing JDBC query", :exception => e)
+    end
+    # if either of: no records or a Sequel exception occurs the payload is
+    # empty and the default can be substituted later.
+    result
   end
 
   def prepare_parameters_from_event(event)
