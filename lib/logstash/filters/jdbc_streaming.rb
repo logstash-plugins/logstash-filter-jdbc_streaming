@@ -4,8 +4,6 @@ require "logstash/namespace"
 require "logstash/plugin_mixins/jdbc_streaming"
 require "lru_redux"
 
-require "date"
-
 # This filter executes a SQL query and store the result set in the field
 # specified as `target`.
 # It will cache the results locally in an LRU cache with expiry
