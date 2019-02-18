@@ -4,6 +4,8 @@ require "logstash/namespace"
 require "logstash/plugin_mixins/jdbc_streaming"
 require "lru_redux"
 
+require "date"
+
 # This filter executes a SQL query and store the result set in the field
 # specified as `target`.
 # It will cache the results locally in an LRU cache with expiry
@@ -154,22 +156,16 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       if @connection_retry_attempts > 0
         @last_retry_timestamp = @@global_retry_timestamps[@global_retry_delay_label] if global_retry
         if event.timestamp.to_f - @last_retry_timestamp >= @connection_retry_delay
-          # Unfortunately a query timeout causes a DatabaseError like many other circumstances,
-          # so we have to manually validate the connection(s).
-          @database.synchronize do |conn|
-            begin
-              unless @database.valid_connection?(conn)
-                @logger.warn? && @logger.warn("No connection to database. Reconnecting #{@connection_retry_attempts} times...", :exception => e)
-                jdbc_connect
-                @logger.debug? && @logger.debug("Connection reestablished")
-                return execute_query(params, event)
-              end
-            rescue ::Sequel::Error => recon_e
-              @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
-            ensure
-              @last_retry_timestamp = event.timestamp.to_f
-              @@global_retry_timestamps[@global_retry_delay_label] = @last_retry_timestamp if global_retry
-            end
+          begin
+            @logger.warn? && @logger.warn("No connection to database. Reconnecting #{@connection_retry_attempts} times...", :exception => e)
+            jdbc_connect
+            @logger.debug? && @logger.debug("Connection reestablished")
+            return execute_query(params, event)
+          rescue ::Sequel::Error => recon_e
+            @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
+          ensure
+            @last_retry_timestamp = event.timestamp.to_f
+            @@global_retry_timestamps[@global_retry_delay_label] = @last_retry_timestamp if global_retry
           end
         end
       end
