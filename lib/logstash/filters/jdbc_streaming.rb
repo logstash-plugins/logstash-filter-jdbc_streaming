@@ -114,7 +114,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   def register
     convert_config_options
     prepare_connected_jdbc_cache
-    @last_retry_timestamp = 0
+    initialize_retry_timestamps
   end
 
   def filter(event)
@@ -138,11 +138,11 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   def cache_lookup(event)
     params = prepare_parameters_from_event(event)
     @cache.get(params) do
-      execute_query(params, event.timestamp.to_f)
+      execute_query(params, event)
     end
   end
 
-  def execute_query(params, event_timestamp)
+  def execute_query(params, event)
     result = CachePayload.new
     begin
       query = @database[@statement, params] # returns a dataset
@@ -152,20 +152,23 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       end
     rescue ::Sequel::Error => e
       if @connection_retry_attempts > 0
-        if event_timestamp - @last_retry_timestamp >= @connection_retry_delay
-          @last_retry_timestamp = event_timestamp
+        @last_retry_timestamp = @@global_retry_timestamps[@global_retry_delay_label] if global_retry
+        if event.timestamp.to_f - @last_retry_timestamp >= @connection_retry_delay
           # Unfortunately a query timeout causes a DatabaseError like many other circumstances,
           # so we have to manually validate the connection(s).
           @database.synchronize do |conn|
             begin
               unless @database.valid_connection?(conn)
                 @logger.warn? && @logger.warn("No connection to database. Reconnecting #{@connection_retry_attempts} times...", :exception => e)
-                retry_jdbc_connect
+                jdbc_connect
                 @logger.debug? && @logger.debug("Connection reestablished")
-                return execute_query(params, event_timestamp)
+                return execute_query(params, event)
               end
             rescue ::Sequel::Error => recon_e
               @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
+            ensure
+              @last_retry_timestamp = event.timestamp.to_f
+              @@global_retry_timestamps[@global_retry_delay_label] = @last_retry_timestamp if global_retry
             end
           end
         end
@@ -217,4 +220,18 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
     @cache = klass.new(@cache_size, @cache_expiration)
     prepare_jdbc_connection
   end
+
+  def initialize_retry_timestamps
+    if global_retry
+      @@global_retry_timestamps ||= {}
+      @@global_retry_timestamps[@global_retry_delay_label] = 0
+    else
+      @last_retry_timestamp = 0
+    end
+  end
+
+  def global_retry
+    !(@global_retry_delay_label.nil? || @global_retry_delay_label.empty?)
+  end
+
 end end end # class LogStash::Filters::Jdbc

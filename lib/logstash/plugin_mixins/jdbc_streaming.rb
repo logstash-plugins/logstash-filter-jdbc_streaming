@@ -38,18 +38,23 @@ module LogStash module PluginMixins module JdbcStreaming
     config :jdbc_validation_timeout, :validate => :number, :default => 3600
 
     # Maximum number of times to retry connecting to database.
-    # Setting it to 0 disables connection retry.
+    # Setting it to 0 (default) disables the whole connection retry mechanism.
     config :connection_retry_attempts, :validate => :number, :default => 0
 
     # Number of seconds to sleep between connection retry attempts.
     config :connection_retry_attempts_wait_time, :validate => :number, :default => 0.5
 
-    # Minimum number of seconds to wait before the next connection retry circle starts.
+    # Minimum number of seconds to wait before the next connection retry cycle starts.
     #
     # While `connection_retry_attempts_wait_time` waits per event and thus blocks the pipeline,
     # `connection_retry_delay` skips connection retries for all events that are processed
     # in the given time frame.
     config :connection_retry_delay, :validate => :number, :default => 300
+
+    # The delay given by `connection_retry_delay` is shared between all *jdbc_streaming*
+    # instances with the same `global_retry_delay_label`. By default (or set to an empty
+    # string) each filter instance has its own delay.
+    config :global_retry_delay_label, :validate => :string
   end
 
   public
@@ -64,10 +69,10 @@ module LogStash module PluginMixins module JdbcStreaming
     end
 
     Sequel::JDBC.load_driver(@jdbc_driver_class)
-    retry_jdbc_connect(@connection_retry_attempts + 1)
+    jdbc_connect(@connection_retry_attempts + 1)
   end # def prepare_jdbc_connection
 
-  def retry_jdbc_connect(number_of_attempts=@connection_retry_attempts)
+  def jdbc_connect(number_of_attempts=@connection_retry_attempts)
     last_exception = nil
     if number_of_attempts.times do |i|
       begin
