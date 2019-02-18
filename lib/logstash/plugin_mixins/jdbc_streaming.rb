@@ -48,12 +48,13 @@ module LogStash module PluginMixins module JdbcStreaming
     #
     # While `connection_retry_attempts_wait_time` waits per event and thus blocks the pipeline,
     # `connection_retry_delay` skips connection retries for all events that are processed
-    # in the given time frame.
+    # in the given time frame. The filter fails for these events and the tags from
+    # `tag_on_failure` are added.
     config :connection_retry_delay, :validate => :number, :default => 300
 
-    # The delay given by `connection_retry_delay` is shared between all *jdbc_streaming*
-    # instances with the same `global_retry_delay_label`. By default (or set to an empty
-    # string) each filter instance has its own delay.
+    # The delay calculation for the next retry cycle is shared between all
+    # *jdbc_streaming* filter instances with the same `global_retry_delay_label`.
+    # By default (or set to an empty string) each filter has its own delay.
     config :global_retry_delay_label, :validate => :string
   end
 

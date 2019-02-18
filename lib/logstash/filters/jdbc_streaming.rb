@@ -162,10 +162,9 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
             @logger.debug? && @logger.debug("Connection reestablished")
             return execute_query(params, event)
           rescue ::Sequel::Error => recon_e
-            @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
-          ensure
             @last_retry_timestamp = event.timestamp.to_f
             @@global_retry_timestamps[@global_retry_delay_label] = @last_retry_timestamp if global_retry
+            @logger.warn? && @logger.warn("Reconnecting failed", :exception => recon_e)
           end
         end
       end
