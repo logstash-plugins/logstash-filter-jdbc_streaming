@@ -95,7 +95,7 @@ cache_expiration period.
   * Value type is <<number,number>>
   * Default value is `500`
 
-The maximum number of cache entries are stored. Defaults to 500 entries.
+The maximum number of cache entries that will be stored. Defaults to 500 entries.
 The least recently used entry will be evicted.
 
 [id="plugins-{type}s-{plugin}-default_hash"]
