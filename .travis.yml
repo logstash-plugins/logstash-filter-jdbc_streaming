@@ -5,7 +5,6 @@ cache: bundler
 services:
 - postgresql
 before_install:
-- psql -c 'create user logstash;' -U postgres
 - psql -c 'create database jdbc_streaming_db;' -U postgres
 - gem install bundler -v '< 2'
 matrix:

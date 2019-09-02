@@ -16,12 +16,11 @@ module LogStash module Filters
     ENV["TZ"] = "Etc/UTC"
     let(:mixin_settings) do
       { "jdbc_driver_class" => "org.postgresql.Driver",
-        "jdbc_user" => "logstash", "jdbc_password" => "logstash??",
-        "jdbc_connection_string" => "jdbc:postgresql://localhost/ls_test_2"}
+        "jdbc_user" => "postgres", "jdbc_connection_string" => "jdbc:postgresql://localhost/jdbc_streaming_db"}
     end
     let(:plugin) { JdbcStreaming.new(mixin_settings.merge(settings)) }
     let (:db) do
-      ::Sequel.connect(mixin_settings['jdbc_connection_string'], :user => mixin_settings['jdbc_user'], :password => mixin_settings['jdbc_password'])
+      ::Sequel.connect(mixin_settings['jdbc_connection_string'], :user => mixin_settings['jdbc_user'])
     end
     let(:event)      { ::LogStash::Event.new("message" => "some text", "ip" => ipaddr) }
     let(:cache_expiration) { 3.0 }
