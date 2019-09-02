@@ -15,13 +15,13 @@ module LogStash module Filters
 
     ENV["TZ"] = "Etc/UTC"
     let(:mixin_settings) do
-      { "jdbc_user" => "postgres", "jdbc_driver_class" => "org.postgresql.Driver",
-        "jdbc_connection_string" => "jdbc:postgresql://localhost/jdbc_streaming_db?user=postgres"}
+      { "jdbc_driver_class" => "org.postgresql.Driver",
+        "jdbc_user" => "logstash", "jdbc_password" => "logstash??",
+        "jdbc_connection_string" => "jdbc:postgresql://localhost/ls_test_2"}
     end
-    let(:settings) { {} }
     let(:plugin) { JdbcStreaming.new(mixin_settings.merge(settings)) }
     let (:db) do
-      ::Sequel.connect(mixin_settings['jdbc_connection_string'])
+      ::Sequel.connect(mixin_settings['jdbc_connection_string'], :user => mixin_settings['jdbc_user'], :password => mixin_settings['jdbc_password'])
     end
     let(:event)      { ::LogStash::Event.new("message" => "some text", "ip" => ipaddr) }
     let(:cache_expiration) { 3.0 }
@@ -38,7 +38,8 @@ module LogStash module Filters
         "cache_size" => cache_size,
         "tag_on_failure" => ["lookup_failed"],
         "tag_on_default_use" => ["default_used_instead"],
-        "default_hash" => {"name" => "unknown", "location" => "unknown"}
+        "default_hash" => {"name" => "unknown", "location" => "unknown"},
+        "sequel_opts" => {"pool_timeout" => 600}
       }
     end
     let(:ipaddr)    { "10.#{idx}.1.1" }

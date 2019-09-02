@@ -50,7 +50,7 @@ module LogStash module PluginMixins module JdbcStreaming
     end
 
     Sequel::JDBC.load_driver(@jdbc_driver_class)
-    @database = Sequel.connect(@jdbc_connection_string, :user=> @jdbc_user, :password=>  @jdbc_password.nil? ? nil : @jdbc_password.value)
+    @database = Sequel.connect(@jdbc_connection_string, @sequel_opts_symbols)
     if @jdbc_validate_connection
       @database.extension(:connection_validator)
       @database.pool.connection_validation_timeout = @jdbc_validation_timeout

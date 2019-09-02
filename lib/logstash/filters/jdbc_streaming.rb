@@ -108,6 +108,9 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   # The least recently used entry will be evicted
   config :cache_size, :validate => :number, :default => 500
 
+  # Options hash to pass to Sequel
+  config :sequel_opts, :validate => :hash, :default => {}
+
   # ----------------------------------------
   public
 
@@ -190,8 +193,11 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   def convert_config_options
     # create these object once they will be cloned for every filter call anyway,
     # lets not create a new object for each
-    @symbol_parameters = @parameters.inject({}) {|hash,(k,v)| hash[k.to_sym] = v ; hash }
+    @symbol_parameters = @parameters.inject({}) {|hash,(k,v)| hash[k.to_sym] = v; hash }
     @default_array = [@default_hash]
+    @sequel_opts_symbols = @sequel_opts.inject({}) {|hash, (k,v)| hash[k.to_sym] = v; hash}
+    @sequel_opts_symbols[:user] = @jdbc_user
+    @sequel_opts_symbols[:password] = @jdbc_password.nil? ? nil : @jdbc_password.value
   end
 
   def prepare_connected_jdbc_cache
