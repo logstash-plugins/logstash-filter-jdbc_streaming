@@ -1,3 +1,4 @@
 bundle install
 bundle exec rake vendor
-bundle exec rspec spec && bundle exec rspec spec --tag integration
+USER=logstash bundle exec rspec spec
+USER=postgres bundle exec rspec spec --tag integration
