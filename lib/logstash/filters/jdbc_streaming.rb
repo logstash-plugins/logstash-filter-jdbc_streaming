@@ -90,6 +90,9 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   config :prepared_statement_name, :validate => :string, :default => ""
   config :prepared_statement_bind_values, :validate => :array, :default => []
 
+  # Options hash to pass to Sequel
+  config :sequel_opts, :validate => :hash, :default => {}
+
   # ----------------------------------------
   public
 

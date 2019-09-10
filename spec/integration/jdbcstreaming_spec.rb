@@ -43,7 +43,8 @@ module LogStash module Filters
         "cache_size" => cache_size,
         "tag_on_failure" => ["lookup_failed"],
         "tag_on_default_use" => ["default_used_instead"],
-        "default_hash" => {"name" => "unknown", "location" => "unknown"}
+        "default_hash" => {"name" => "unknown", "location" => "unknown"},
+        "sequel_opts" => {"pool_timeout" => 600}
       }
     end
     let(:ipaddr)    { "10.#{idx}.1.1" }
@@ -87,7 +88,8 @@ module LogStash module Filters
           "cache_size" => cache_size,
           "tag_on_failure" => ["lookup_failed"],
           "tag_on_default_use" => ["default_used_instead"],
-          "default_hash" => {"name" => "unknown", "location" => "unknown"}
+          "default_hash" => {"name" => "unknown", "location" => "unknown"},
+          "sequel_opts" => {"pool_timeout" => 600}
         }
       end
       it "fills in the target" do
