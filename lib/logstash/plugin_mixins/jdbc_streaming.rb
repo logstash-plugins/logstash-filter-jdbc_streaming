@@ -1,10 +1,27 @@
 # encoding: utf-8
 require "logstash/config/mixin"
-require_relative "wrapped_driver"
+require_relative "jdbc_streaming/wrapped_driver"
 
 # Tentative of abstracting JDBC logic to a mixin
 # for potential reuse in other plugins (input/output)
 module LogStash module PluginMixins module JdbcStreaming
+  class RowCache
+    def initialize(size, ttl)
+      @cache = ::LruRedux::TTL::ThreadSafeCache.new(size, ttl)
+    end
+
+    def get(parameters)
+      @cache.getset(parameters) { yield }
+    end
+  end
+
+  class NoCache
+    def initialize(size, ttl) end
+
+    def get(statement)
+      yield
+    end
+  end
 
   # This method is called when someone includes this module
   def self.included(base)
