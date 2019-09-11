@@ -30,16 +30,16 @@ module LogStash module Filters
 
       before :each do
         db.create_table :reference_table do
-          String :ip
+          String  :ip
           String  :name
           String  :location
-          String  :gcode
+          Integer :gcode
         end
-        db[:reference_table].insert(:ip => "10.1.1.1", :name => "ldn-server-1", :location => "LDN-2-3-4", :gcode => "GB")
-        db[:reference_table].insert(:ip => "10.2.1.1", :name => "nyc-server-1", :location => "NYC-5-2-8", :gcode => "US")
-        db[:reference_table].insert(:ip => "10.3.1.1", :name => "mv-server-1", :location => "MV-9-6-4", :gcode => "US")
-        db[:reference_table].insert(:ip => "10.4.1.1", :name => "sf-server-1", :location => "SF-9-5-4", :gcode => "US")
-        db[:reference_table].insert(:ip => "10.4.1.1", :name => "mtl-server-1", :location => "MTL-9-3-4", :gcode => "CA")
+        db[:reference_table].insert(:ip => "10.1.1.1", :name => "ldn-server-1", :location => "LDN-2-3-4", :gcode => 3)
+        db[:reference_table].insert(:ip => "10.2.1.1", :name => "nyc-server-1", :location => "NYC-5-2-8", :gcode => 1)
+        db[:reference_table].insert(:ip => "10.3.1.1", :name => "mv-server-1", :location => "MV-9-6-4", :gcode => 1)
+        db[:reference_table].insert(:ip => "10.4.1.1", :name => "sf-server-1", :location => "SF-9-5-4", :gcode => 1)
+        db[:reference_table].insert(:ip => "10.4.1.1", :name => "mtl-server-1", :location => "MTL-9-3-4", :gcode => 2)
       end
 
       after :each do
@@ -189,7 +189,7 @@ module LogStash module Filters
             "statement" => statement,
             "use_prepared_statements" => true,
             "prepared_statement_name" => "lookup_ip",
-            "prepared_statement_bind_values" => ["ip", "CA"],
+            "prepared_statement_bind_values" => ["ip", 2],
             "target" => "server",
             "use_cache" => use_cache,
             "cache_expiration" => cache_expiration,
