@@ -157,7 +157,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   end
 
   def validate_prepared_statement_mode
-        error_messages = []
+    error_messages = []
     if @prepared_statement_name.empty?
       error_messages << "must provide a name for the Prepared Statement, it must be unique for the db session"
     end

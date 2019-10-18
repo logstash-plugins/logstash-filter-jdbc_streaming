@@ -21,11 +21,37 @@ module LogStash module PluginMixins module JdbcStreaming
       post_init(plugin)
     end
 
+    # Get from cache or performs remote lookup and saves to cache
+    # @param db [Sequel::Database]
+    # @param event [LogStash::Event]
+    # @returnparam [CachePayload]
     def cache_lookup(db, event)
       # override in subclass
     end
 
     private
+
+    def common_cache_lookup(db, event)
+      params = prepare_parameters_from_event(event)
+      @cache.get(params) do
+        result = CachePayload.new
+        begin
+          logger.debug? && logger.debug("Executing JDBC query", :statement => statement, :parameters => params)
+          execute_extract_records(db, params, result)
+        rescue ::Sequel::Error => e
+          # all sequel errors are a subclass of this, let all other standard or runtime errors bubble up
+          result.failed!
+          logger.warn? && logger.warn("Exception when executing JDBC query", :statement => statement, :parameters => params, :exception => e)
+        end
+        # if either of: no records or a Sequel exception occurs the payload is
+        # empty and the default can be substituted later.
+        result
+      end
+    end
+
+    def execute_extract_records(db, params, result)
+      # override in subclass
+    end
 
     def post_init(plugin)
       # override in subclass, if needed
@@ -50,27 +76,17 @@ module LogStash module PluginMixins module JdbcStreaming
     # @param event [LogStash::Event]
     # @returnparam [CachePayload]
     def cache_lookup(db, event)
-      params = prepare_parameters_from_event(event)
-      @cache.get(params) do
-        result = CachePayload.new
-        begin
-          query = db[statement, params] # returns a dataset
-          logger.debug? && logger.debug("Executing JDBC query", :statement => statement, :parameters => params)
-          query.all do |row|
-            result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
-          end
-        rescue ::Sequel::Error => e
-          # all sequel errors are a subclass of this, let all other standard or runtime errors bubble up
-          result.failed!
-          logger.warn? && logger.warn("Exception when executing JDBC query", :exception => e)
-        end
-        # if either of: no records or a Sequel exception occurs the payload is
-        # empty and the default can be substituted later.
-        result
-      end
+      common_cache_lookup(db, event)
     end
 
     private
+
+    def execute_extract_records(db, params, result)
+      dataset = db[statement, params] # returns a Sequel dataset
+      dataset.all do |row|
+        result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
+      end
+    end
 
     def post_init(plugin)
       @parameters = plugin.parameters.inject({}) do |hash,(k,v)|
@@ -95,27 +111,17 @@ module LogStash module PluginMixins module JdbcStreaming
     # @returnparam [CachePayload]
     def cache_lookup(db, event)
       build_prepared_statement(db)
-      params = prepare_parameters_from_event(event)
-      @cache.get(params) do
-        result = CachePayload.new
-        begin
-          records = db.call(name, params) # returns an array of hashes
-          logger.debug? && logger.debug("Executing JDBC query", :statement => statement, :parameters => params)
-          records.each do |row|
-            result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
-          end
-        rescue ::Sequel::Error => e
-          # all sequel errors are a subclass of this, let all other standard or runtime errors bubble up
-          result.failed!
-          logger.warn? && logger.warn("Exception when executing JDBC query", :exception => e)
-        end
-        # if either of: no records or a Sequel exception occurs the payload is
-        # empty and the default can be substituted later.
-        result
-      end
+      common_cache_lookup(db, event)
     end
 
     private
+
+    def execute_extract_records(db, params, result)
+      records = db.call(name, params) # returns an array of hashes
+      records.each do |row|
+        result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
+      end
+    end
 
     def post_init(plugin)
       @name = plugin.prepared_statement_name.to_sym

@@ -227,7 +227,8 @@ Array of bind values for the prepared statement. Use field references and consta
   * Value type is <<string,string>>
   * Default value is `""`
 
-Name given to the prepared statement. It must be unique in your config and in the database
+Name given to the prepared statement. It must be unique in your config and in the database.
+You need to supply this if `use_prepared_statements`is true.
 
 [id="plugins-{type}s-{plugin}-sequel_opts"]
 ===== `sequel_opts`
@@ -236,6 +237,12 @@ Name given to the prepared statement. It must be unique in your config and in th
   * Default value is `{}`
 
 General/Vendor-specific Sequel configuration options
+
+An example of an optional connection pool configuration
+   max_connections - The maximum number of connections the connection pool
+
+examples of vendor-specific options can be found in this documentation page:
+https://github.com/jeremyevans/sequel/blob/master/doc/opening_databases.rdoc
 
 [id="plugins-{type}s-{plugin}-statement"]
 ===== `statement`
