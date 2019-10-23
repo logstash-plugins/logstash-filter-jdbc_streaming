@@ -83,7 +83,7 @@ module LogStash module PluginMixins module JdbcStreaming
     def execute_extract_records(db, params, result)
       dataset = db[statement, params] # returns a Sequel dataset
       dataset.all do |row|
-        result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} #Stringify row keys
+        result.push row.inject({}){|hash,(k,v)| hash[k.to_s] = v; hash} # Stringify row keys
       end
     end
 

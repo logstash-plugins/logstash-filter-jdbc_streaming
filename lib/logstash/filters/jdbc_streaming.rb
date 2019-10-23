@@ -109,9 +109,11 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       end
     else
       # symbolise and wrap value in parameter handler
-      @parameters = @parameters.inject({}) do |hash,(k,value)|
-        hash[k.to_sym] = ParameterHandler.build_parameter_handler(value)
-        hash
+      unless @parameters.values.all?{|v| v.is_a?(PluginMixins::JdbcStreaming::ParameterHandler)}
+        @parameters = parameters.inject({}) do |hash,(k,value)|
+          hash[k.to_sym] = PluginMixins::JdbcStreaming::ParameterHandler.build_parameter_handler(value)
+          hash
+        end
       end
     end
     @statement_handler = LogStash::PluginMixins::JdbcStreaming::StatementHandler.build_statement_handler(self)
@@ -176,12 +178,13 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       # mismatch in number of bind value elements to placeholder characters
       error_messages << "there is a mismatch between the number of statement `?` placeholders and :prepared_statement_bind_values array setting elements"
     end
-
-    @prepared_statement_bind_values = prepared_statement_bind_values.map do |value|
-      ParameterHandler.build_bind_value_handler(value)
+    unless @prepared_statement_bind_values.all?{|v| v.is_a?(PluginMixins::JdbcStreaming::ParameterHandler)}
+      @prepared_statement_bind_values = prepared_statement_bind_values.map do |value|
+        ParameterHandler.build_bind_value_handler(value)
+      end
     end
     if prepared_statement_warn_on_constant_usage
-      warnables = @prepared_statement_bind_values.select {|handler| handler.is_a?(LogStash::PluginMixins::JdbcStreaming::ConstantParameter) && handler.given_value.is_a?(String)}
+      warnables = @prepared_statement_bind_values.select {|handler| handler.is_a?(PluginMixins::JdbcStreaming::ConstantParameter) && handler.given_value.is_a?(String)}
       unless warnables.empty?
         @prepared_statement_constant_warned = true
         msg = "When using prepared statements, the following `prepared_statement_bind_values` will be treated as constants, if you intend them to be field references please use the square bracket field reference syntax e.g. '[field]'"
