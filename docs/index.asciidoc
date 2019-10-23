@@ -49,7 +49,11 @@ Using server side prepared statements can speed up execution times as the server
 NOTE: Not all JDBC accessible technologies will support prepared statements.
 
 With the introduction of Prepared Statement support comes a different code execution path and some new settings. Most of the existing settings are still useful but there are several new settings for Prepared Statements to read up on.
-Use the boolean setting `use_prepared_statements` to enable this execution mode. Use the `prepared_statement_name` setting to specify a name for the Prepared Statement, this identifies the prepared statement locally and remotely and it should be unique in your config and on the database. Use the `prepared_statement_bind_values` array setting to specify the bind values, typically, these values are indirectly extracted from your event, i.e. the string in the array refers to a field name in your event. You can also use constant values like numbers or strings but ensure that any string constants (e.g. a locale constant of "en" or "de") is not also an event field name. It is a good idea to use the bracketed field reference syntax for fields and normal strings for constants, e.g. `prepared_statement_bind_values => ["[src_ip]", "tokyo"],`
+Use the boolean setting `use_prepared_statements` to enable this execution mode.
+Use the `prepared_statement_name` setting to specify a name for the Prepared Statement, this identifies the prepared statement locally and remotely and it should be unique in your config and on the database.
+Use the `prepared_statement_bind_values` array setting to specify the bind values. Typically, these values are indirectly extracted from your event, i.e. the string in the array refers to a field name in your event. You can also use constant values like numbers or strings but ensure that any string constants (e.g. a locale constant of "en" or "de") is not also an event field name. It is a good idea to use the bracketed field reference syntax for fields and normal strings for constants, e.g. `prepared_statement_bind_values => ["[src_ip]", "tokyo"],`.
+There are 3 possible parameter schemes. Interpolated, field references and constants. Use interpolation when you are prefixing, suffixing or concatenating field values to create a value that exists in you database, e.g. "%{username}@%{domain}" -> "alice@example.org", "%{distance}km" -> "42km". Use field references for exact field values e.g. "[srcip]" -> "192.168.1.2". Use constants when a database column holds values that slice categorise a a number of similar records e.g. language translations.
+A boolean setting `prepared_statement_warn_on_constant_usage` defaulting to true, controls whether you will see a WARN message logged that warns when constants could be missing the bracketed field reference syntax. If you have set your field references and constants correctly you should set `prepared_statement_warn_on_constant_usage` to false. This setting and code checks should be deprecated in a future major Logstash release.
 The `statement` (or `statement_path`) setting still holds the SQL statement but to use bind variables you must use the `?` character as a placeholder in the exact order found in the `prepared_statement_bind_values` array.
 Some technologies may require connection string properties to be set, see MySQL example below.
 
@@ -93,6 +97,7 @@ This plugin supports the following configuration options plus the <<plugins-{typ
 | <<plugins-{type}s-{plugin}-parameters>> |<<hash,hash>>|No
 | <<plugins-{type}s-{plugin}-prepared_statement_bind_values>> |<<array,array>>|No
 | <<plugins-{type}s-{plugin}-prepared_statement_name>> |<<string,string>>|No
+| <<plugins-{type}s-{plugin}-prepared_statement_warn_on_constant_usage>> |<<boolean,boolean>>|No
 | <<plugins-{type}s-{plugin}-sequel_opts>> |<<hash,hash>>|No
 | <<plugins-{type}s-{plugin}-statement>> |<<string,string>>|Yes
 | <<plugins-{type}s-{plugin}-tag_on_default_use>> |<<array,array>>|No
@@ -228,7 +233,16 @@ Array of bind values for the prepared statement. Use field references and consta
   * Default value is `""`
 
 Name given to the prepared statement. It must be unique in your config and in the database.
-You need to supply this if `use_prepared_statements`is true.
+You need to supply this if `use_prepared_statements` is true.
+
+[id="plugins-{type}s-{plugin}-prepared_statement_warn_on_constant_usage"]
+===== `prepared_statement_warn_on_constant_usage`
+
+  * Value type is <<boolean,boolean>>
+  * Default value is `true`
+
+A flag that controls whether a warning is logged if, in `prepared_statement_bind_values`,
+a String constant is detected that might be intended as a field reference.
 
 [id="plugins-{type}s-{plugin}-sequel_opts"]
 ===== `sequel_opts`

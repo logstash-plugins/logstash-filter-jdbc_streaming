@@ -4,6 +4,7 @@ require "logstash/namespace"
 require "logstash/plugin_mixins/jdbc_streaming"
 require "logstash/plugin_mixins/jdbc_streaming/cache_payload"
 require "logstash/plugin_mixins/jdbc_streaming/statement_handler"
+require "logstash/plugin_mixins/jdbc_streaming/parameter_handler"
 require "lru_redux"
 
 # This filter executes a SQL query and store the result set in the field
@@ -89,9 +90,12 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   config :use_prepared_statements, :validate => :boolean, :default => false
   config :prepared_statement_name, :validate => :string, :default => ""
   config :prepared_statement_bind_values, :validate => :array, :default => []
+  config :prepared_statement_warn_on_constant_usage, :validate => :boolean, :default => true # deprecate in a future major LS release
 
   # Options hash to pass to Sequel
   config :sequel_opts, :validate => :hash, :default => {}
+
+  attr_reader :prepared_statement_constant_warned # for test verification, remove when warning is deprecated and removed
 
   # ----------------------------------------
   public
@@ -102,6 +106,12 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
       validation_errors = validate_prepared_statement_mode
       unless validation_errors.empty?
         raise(LogStash::ConfigurationError, "Prepared Statement Mode validation errors: " + validation_errors.join(", "))
+      end
+    else
+      # symbolise and wrap value in parameter handler
+      @parameters = @parameters.inject({}) do |hash,(k,value)|
+        hash[k.to_sym] = ParameterHandler.build_parameter_handler(value)
+        hash
       end
     end
     @statement_handler = LogStash::PluginMixins::JdbcStreaming::StatementHandler.build_statement_handler(self)
@@ -157,6 +167,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   end
 
   def validate_prepared_statement_mode
+    @prepared_statement_constant_warned = false
     error_messages = []
     if @prepared_statement_name.empty?
       error_messages << "must provide a name for the Prepared Statement, it must be unique for the db session"
@@ -164,6 +175,18 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
     if @statement.count("?") != @prepared_statement_bind_values.size
       # mismatch in number of bind value elements to placeholder characters
       error_messages << "there is a mismatch between the number of statement `?` placeholders and :prepared_statement_bind_values array setting elements"
+    end
+
+    @prepared_statement_bind_values = prepared_statement_bind_values.map do |value|
+      ParameterHandler.build_bind_value_handler(value)
+    end
+    if prepared_statement_warn_on_constant_usage
+      warnables = @prepared_statement_bind_values.select {|handler| handler.is_a?(LogStash::PluginMixins::JdbcStreaming::ConstantParameter) && handler.given_value.is_a?(String)}
+      unless warnables.empty?
+        @prepared_statement_constant_warned = true
+        msg = "When using prepared statements, the following `prepared_statement_bind_values` will be treated as constants, if you intend them to be field references please use the square bracket field reference syntax e.g. '[field]'"
+        logger.warn(msg, :constants => warnables)
+      end
     end
     error_messages
   end

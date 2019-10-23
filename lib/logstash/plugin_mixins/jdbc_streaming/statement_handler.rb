@@ -58,10 +58,9 @@ module LogStash module PluginMixins module JdbcStreaming
     end
 
     def prepare_parameters_from_event(event)
-      @parameters.inject({}) do |hash,(k,v)|
-        # allow for scalar constants in parameters/bind values
-        interpolated = event.sprintf(v)
-        value = event.include?(interpolated) ? event.get(interpolated) : v
+      @parameters.inject({}) do |hash, (k, parameter_handler)|
+        # defer to appropriate parameter handler
+        value = parameter_handler.extract_from(event)
         hash[k] = value.is_a?(::LogStash::Timestamp) ? value.time : value
         hash
       end
@@ -89,15 +88,7 @@ module LogStash module PluginMixins module JdbcStreaming
     end
 
     def post_init(plugin)
-      @parameters = plugin.parameters.inject({}) do |hash,(k,v)|
-        case v
-        when LogStash::Timestamp
-          hash[k.to_sym] = v.time
-        else
-          hash[k.to_sym] = v
-        end
-        hash
-      end
+      @parameters = plugin.parameters
     end
   end
 

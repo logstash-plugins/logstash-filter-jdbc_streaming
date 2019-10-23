@@ -189,7 +189,7 @@ module LogStash module Filters
             "statement" => statement,
             "use_prepared_statements" => true,
             "prepared_statement_name" => "lookup_ip",
-            "prepared_statement_bind_values" => ["ip", 2],
+            "prepared_statement_bind_values" => ["[ip]", 2],
             "target" => "server",
             "use_cache" => use_cache,
             "cache_expiration" => cache_expiration,
@@ -206,6 +206,7 @@ module LogStash module Filters
 
           it "fills in the target" do
             plugin.register
+            expect(plugin.prepared_statement_constant_warned).to be_falsey
             plugin.filter(event)
             expect(event.get("server")).to eq([{"name" => "mtl-server-1", "location" => "MTL-9-3-4"}])
             expect(event.get("tags") || []).not_to include("lookup_failed")
@@ -224,10 +225,20 @@ module LogStash module Filters
 
         describe "fails parameter mismatch validation" do
           before :each do
-            settings["prepared_statement_bind_values"] = ["ip"]
+            settings["prepared_statement_bind_values"] = ["[ip]"]
           end
           it "should fail to register" do
             expect{ plugin.register }.to raise_error(LogStash::ConfigurationError)
+          end
+        end
+
+        describe "warns on constant usage" do
+          before :each do
+            settings["prepared_statement_bind_values"] = ["ip", 2]
+          end
+          it "should set the warning logged flag" do
+            plugin.register
+            expect(plugin.prepared_statement_constant_warned).to be_truthy
           end
         end
       end
