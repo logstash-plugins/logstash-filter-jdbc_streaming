@@ -81,7 +81,7 @@ module LogStash module Filters
           "statement" => statement,
           "use_prepared_statements" => true,
           "prepared_statement_name" => "lookup_ip",
-          "prepared_statement_bind_values" => ["ip"],
+          "prepared_statement_bind_values" => ["[ip]"],
           "target" => "server",
           "use_cache" => use_cache,
           "cache_expiration" => cache_expiration,

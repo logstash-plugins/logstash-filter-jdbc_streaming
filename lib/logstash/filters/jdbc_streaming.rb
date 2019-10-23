@@ -40,7 +40,7 @@ require "lru_redux"
 #     statement => "select * from WORLD.COUNTRY WHERE Code = ?"
 #     use_prepared_statements => true
 #     prepared_statement_name => "get_country_from_code"
-#     prepared_statement_bind_values => ["country_code"]
+#     prepared_statement_bind_values => ["[country_code]"]
 #     target => "country_details"
 #   }
 # }
@@ -121,7 +121,7 @@ module LogStash module Filters class JdbcStreaming < LogStash::Filters::Base
   end
 
   def filter(event)
-    result = @statement_handler.cache_lookup(@database, event) # should return a JdbcCachePayload
+    result = @statement_handler.cache_lookup(@database, event) # should return a CachePayload instance
 
     if result.failed?
       tag_failure(event)
