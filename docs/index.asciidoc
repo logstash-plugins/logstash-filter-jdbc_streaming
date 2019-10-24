@@ -42,7 +42,7 @@ filter {
 }
 -----
 
-[id="plugins-{type}s-{plugin}-prepared_statements]
+[id="plugins-{type}s-{plugin}-prepared_statements"]
 ==== Prepared Statements
 
 Using server side prepared statements can speed up execution times as the server optimises the query plan and execution.
