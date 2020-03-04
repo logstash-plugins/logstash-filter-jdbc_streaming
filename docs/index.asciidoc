@@ -9,7 +9,7 @@
 // of the JDBC Integration Plugin.                //
 //                                                //
 // This stand-alone plugin project remains open   //
-// for backports to the 1.x series.          //
+// for backports to the 1.x series.               //
 ////////////////////////////////////////////////////
 
 
