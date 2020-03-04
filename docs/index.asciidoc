@@ -6,7 +6,7 @@
 // Jdbc_streaming Filter Plugin Source Has Moved  //
 // ---------------------------------------------- //
 // The Jdbc_streaming Filter Plugin is now a part //
-// of the JDBC Integration.                       //
+// of the JDBC Integration Plugin.                //
 //                                                //
 // This stand-alone plugin project remains open   //
 // for backports to the 1.x series.          //
