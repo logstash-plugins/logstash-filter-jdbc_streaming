@@ -23,6 +23,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'sequel'
   s.add_runtime_dependency 'lru_redux' # lru cache with ttl
 
-  s.add_development_dependency 'logstash-devutils'
+  s.add_development_dependency 'logstash-devutils', '~> 1.3'
   s.add_development_dependency 'jdbc-derby'
 end
