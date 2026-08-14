@@ -3,5 +3,5 @@
 
 set -ex
 
-bundle exec rspec spec
+bundle exec rspec spec --tag ~integration
 bundle exec rspec spec --tag integration

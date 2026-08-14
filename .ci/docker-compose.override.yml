@@ -4,8 +4,10 @@ services:
       PG_CONNECTION_STRING: "jdbc:postgresql://postgresql:5432"
 
   postgresql:
-    image: postgres:latest
+    image: postgres:16
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-      - ../ci/unit/setup.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./setup.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - 5432:5432
