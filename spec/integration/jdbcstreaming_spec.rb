@@ -1,4 +1,5 @@
 require "logstash/devutils/rspec/spec_helper"
+require "logstash/devutils/rspec/shared_examples"
 require "logstash/filters/jdbc_streaming"
 require "sequel"
 require "sequel/adapters/jdbc"
@@ -16,7 +17,10 @@ module LogStash module Filters
       "jdbc:postgresql://postgresql:5432") + "/jdbc_streaming_db?user=postgres"
 
     let(:mixin_settings) do
-      { "jdbc_driver_class" => "org.postgresql.Driver",
+      {
+        "jdbc_user" => ENV['USER'],
+        "jdbc_password" => ENV["POSTGRES_PASSWORD"],
+        "jdbc_driver_class" => "org.postgresql.Driver",
         "jdbc_driver_library" => "/usr/share/logstash/postgresql.jar",
         "jdbc_connection_string" => jdbc_connection_string
       }
